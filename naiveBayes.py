@@ -67,7 +67,7 @@ class NaiveBayesClassifier(classificationMethod.ClassificationMethod):
     """
     # print('training data is',list(trainingData))
     
-    print('value of k is ',kgrid)
+    # print('value of k is ',kgrid)
     self.likelihoodFrequency = util.Counter()
     self.labelFrequency = util.Counter()
     self.totalLabels = 0
