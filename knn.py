@@ -6,7 +6,6 @@
 # John DeNero (denero@cs.berkeley.edu) and Dan Klein (klein@cs.berkeley.edu).
 # For more info, see http://inst.eecs.berkeley.edu/~cs188/sp09/pacman.html
 
-import util
 import classificationMethod
 import math
 from operator import itemgetter
@@ -87,7 +86,7 @@ class KNNClassifier(classificationMethod.ClassificationMethod):
     sum = 0
     for value in difference.values():
         sum = sum + value * value
-    return sum
+    return math.sqrt(sum)
     
 
     

@@ -18,9 +18,9 @@ import sys
 import util
 import time
 import matplotlib.pyplot as plt
-import seaborn
+import statistics
 
-TEST_SET_SIZE = 100
+TEST_SET_SIZE = 15000
 DIGIT_DATUM_WIDTH=28
 DIGIT_DATUM_HEIGHT=28
 FACE_DATUM_WIDTH=60
@@ -176,9 +176,9 @@ def readCommand( argv ):
   parser.add_option('-1', '--label1', help=default("First label in an odds ratio comparison"), default=0, type="int")
   parser.add_option('-2', '--label2', help=default("Second label in an odds ratio comparison"), default=1, type="int")
   parser.add_option('-w', '--weights', help=default('Whether to print weights'), default=False, action="store_true")
-  parser.add_option('-k', '--smoothing', help=default("Smoothing parameter (ignored when using --autotune)"), type="float", default=5.0)
+  parser.add_option('-k', '--smoothing', help=default("Smoothing parameter (ignored when using --autotune)"), type="float", default=10.0)
   parser.add_option('-a', '--autotune', help=default("Whether to automatically tune hyperparameters"), default=False, action="store_true")
-  parser.add_option('-i', '--iterations', help=default("Maximum iterations to run training"), default=3, type="int")
+  parser.add_option('-i', '--iterations', help=default("Maximum iterations to run training"), default=10, type="int")
   parser.add_option('-s', '--test', help=default("Amount of test data to use"), default=TEST_SET_SIZE, type="int")
   parser.add_option('-q', '--index', help=default("index of data whose predicted label and actual label you want to display"), default = -1, type="int")
   options, otherjunk = parser.parse_args(argv)
@@ -302,22 +302,22 @@ def runClassifier(args, options):
 
   if(options.data=="faces"):
 
+    numTest = samples.getLabelCount("facedata/facedatatestlabels")
     rawTrainingData, trainingLabels = samples.loadDataAndLabel("facedata/facedatatrain", "facedata/facedatatrainlabels",
                                                            numTraining, FACE_DATUM_WIDTH, FACE_DATUM_HEIGHT)
-    rawValidationData, validationLabels = samples.loadDataAndLabel("facedata/facedatatrain",
-                                                                   "facedata/facedatatrainlabels",
+    rawValidationData, validationLabels = samples.loadDataAndLabel("facedata/facedatatest",
+                                                                   "facedata/facedatatestlabels",
                                                                    numTest, FACE_DATUM_WIDTH, FACE_DATUM_HEIGHT)
     rawTestData, testLabels = samples.loadDataAndLabel("facedata/facedatatest", "facedata/facedatatestlabels",
                                                    numTest, FACE_DATUM_WIDTH, FACE_DATUM_HEIGHT)
     # rawTrainingData = samples.loadDataFile("facedata/facedatatrain", numTraining,FACE_DATUM_WIDTH,FACE_DATUM_HEIGHT)
     # trainingLabels = samples.loadLabelsFile("facedata/facedatatrainlabels", numTraining)
-
     # rawValidationData = samples.loadDataFile("facedata/facedatatrain", numTest,FACE_DATUM_WIDTH,FACE_DATUM_HEIGHT)
     # validationLabels = samples.loadLabelsFile("facedata/facedatatrainlabels", numTest)
-
     # rawTestData = samples.loadDataFile("facedata/facedatatest", numTest,FACE_DATUM_WIDTH,FACE_DATUM_HEIGHT)
     # testLabels = samples.loadLabelsFile("facedata/facedatatestlabels", numTest)
   else:
+    numTest = samples.getLabelCount("digitdata/testlabels")
     rawTrainingData, trainingLabels = samples.loadDataAndLabel("digitdata/trainingimages", "digitdata/traininglabels",
                                                                numTraining, DIGIT_DATUM_WIDTH, DIGIT_DATUM_HEIGHT)
     rawValidationData, validationLabels = samples.loadDataAndLabel("digitdata/validationimages",
@@ -417,16 +417,24 @@ def showGraph(x, y1, y2, title, xLabel, yLabel1,yLabel2):
   ax1.set_ylabel(yLabel1, color='g')
   ax2.set_ylabel(yLabel2, color='b')
   plt.title(title)
+  stdev = round(statistics.stdev(y1),2)
+  ax1.text(0.2, 0.95, 'standard deviation is ' + str(stdev),
+           ha='center', va='center',
+           transform=ax1.transAxes,
+           color='red', fontsize=10)
   plt.show()
 
 def fullrun():
 
   classifiers = ['naiveBayes','knn','perceptron']
-  typeData = ['faces','digits']
+  typeData = ['faces', 'digits']
   labelCountFaces = samples.getLabelCount("facedata/facedatatrainlabels")
   labelCountDigits = samples.getLabelCount("digitdata/traininglabels")
+  labelCountTestFaces = samples.getLabelCount("facedata/facedatatestlabels")
+  labelCountTestDigits = samples.getLabelCount("digitdata/testlabels")
   dic = possibleCommands(classifiers, typeData, labelCountFaces, labelCountDigits )
   for key in dic:
+    c2, d2 = key
     values = dic[key]
     percentages, times = [], []
     for value in values:
@@ -442,7 +450,10 @@ def fullrun():
       print("===================================")
       print("===================================")
       print("===================================")
-    c2,d2 = key
+    if d2 == 'faces':
+      percentages = [ 100 * yy / labelCountTestFaces for yy in percentages ]
+    elif d2 == 'digits':
+      percentages = [ 100 * yy / labelCountTestDigits for yy in percentages ]
     title = str(c2) + '  ' + str(d2)
     showGraph(range(10, 101, 10), percentages, times, title, '% of training data', 'accuracy in %', 'time it took for training')
     print(percentages)
