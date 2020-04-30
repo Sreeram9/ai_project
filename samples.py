@@ -7,6 +7,7 @@
 # For more info, see http://inst.eecs.berkeley.edu/~cs188/sp09/pacman.html
 
 import util
+import random
 
 ## Constants
 DATUM_WIDTH = 0 # in pixels
@@ -128,7 +129,53 @@ def readlines(filename):
   else: 
     z = zipfile.ZipFile('data.zip')
     return z.read(filename).decode('utf-8').split('\n')
-    
+
+def loadDataAndLabel(filename,filenamelabels, n,width,height):
+  items,labels = [], []
+
+  fin = readlines(filename)
+  finlabels = readlines(filenamelabels)
+  DATUM_WIDTH = width
+  DATUM_HEIGHT = height
+  fin.reverse()
+
+
+  lenTest = len([i for i in finlabels if i != ''])
+  randomRange = random.sample(range(lenTest),n)
+
+  for line in finlabels:
+    if line == '':
+      break
+    labels.append(int(line))
+
+  # print(fin)
+  # print('len test',lenTest)
+
+  for i in range(lenTest):
+    data = []
+    for j in range(height):
+      if len(fin) == 0:
+        break
+      data.append(list(fin.pop()))
+    if len(data[0]) < DATUM_WIDTH - 1:
+      # we encountered end of file...
+      print("Truncating at %d examples (maximum)", i)
+      break
+    items.append(Datum(data, DATUM_WIDTH, DATUM_HEIGHT))
+
+  # print('len of items', len(items), 'len of labels',len(labels))
+  itemsNew, labelsNew = [], []
+  for i in randomRange:
+    itemsNew.append(items[i])
+    labelsNew.append(labels[i])
+
+  return itemsNew,labelsNew
+
+def getLabelCount(filenamelabels):
+  finlabels = readlines(filenamelabels)
+  lenTest = len([i for i in finlabels if i != ''])
+  return lenTest
+
 def loadLabelsFile(filename, n):
   """
   Reads n labels from a file and returns a list of integers.

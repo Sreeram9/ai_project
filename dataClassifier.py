@@ -16,6 +16,9 @@ import mira
 import samples
 import sys
 import util
+import time
+import matplotlib.pyplot as plt
+import seaborn
 
 TEST_SET_SIZE = 100
 DIGIT_DATUM_WIDTH=28
@@ -116,11 +119,11 @@ def analysis(classifier, guesses, testLabels, testData, rawTestData, printImage)
       prediction = guesses[i]
       truth = testLabels[i]
       if (prediction != truth):
-          print ("===================================")
+          # print ("===================================")
           print ("Mistake on example " , i )
           print ("Predicted %d; truth is %d" % (prediction, truth))
-          print ("Image: ")
-          print (rawTestData[i])
+          # print ("Image: ")
+          # print (rawTestData[i])
           break
 
 
@@ -178,7 +181,6 @@ def readCommand( argv ):
   parser.add_option('-i', '--iterations', help=default("Maximum iterations to run training"), default=3, type="int")
   parser.add_option('-s', '--test', help=default("Amount of test data to use"), default=TEST_SET_SIZE, type="int")
   parser.add_option('-q', '--index', help=default("index of data whose predicted label and actual label you want to display"), default = -1, type="int")
-
   options, otherjunk = parser.parse_args(argv)
   if len(otherjunk) != 0: raise Exception('Command line input not understood: ' + str(otherjunk))
   args = {}
@@ -299,19 +301,36 @@ def runClassifier(args, options):
   numTest = options.test
 
   if(options.data=="faces"):
-    rawTrainingData = samples.loadDataFile("facedata/facedatatrain", numTraining,FACE_DATUM_WIDTH,FACE_DATUM_HEIGHT)
-    trainingLabels = samples.loadLabelsFile("facedata/facedatatrainlabels", numTraining)
-    rawValidationData = samples.loadDataFile("facedata/facedatatrain", numTest,FACE_DATUM_WIDTH,FACE_DATUM_HEIGHT)
-    validationLabels = samples.loadLabelsFile("facedata/facedatatrainlabels", numTest)
-    rawTestData = samples.loadDataFile("facedata/facedatatest", numTest,FACE_DATUM_WIDTH,FACE_DATUM_HEIGHT)
-    testLabels = samples.loadLabelsFile("facedata/facedatatestlabels", numTest)
+
+    rawTrainingData, trainingLabels = samples.loadDataAndLabel("facedata/facedatatrain", "facedata/facedatatrainlabels",
+                                                           numTraining, FACE_DATUM_WIDTH, FACE_DATUM_HEIGHT)
+    rawValidationData, validationLabels = samples.loadDataAndLabel("facedata/facedatatrain",
+                                                                   "facedata/facedatatrainlabels",
+                                                                   numTest, FACE_DATUM_WIDTH, FACE_DATUM_HEIGHT)
+    rawTestData, testLabels = samples.loadDataAndLabel("facedata/facedatatest", "facedata/facedatatestlabels",
+                                                   numTest, FACE_DATUM_WIDTH, FACE_DATUM_HEIGHT)
+    # rawTrainingData = samples.loadDataFile("facedata/facedatatrain", numTraining,FACE_DATUM_WIDTH,FACE_DATUM_HEIGHT)
+    # trainingLabels = samples.loadLabelsFile("facedata/facedatatrainlabels", numTraining)
+
+    # rawValidationData = samples.loadDataFile("facedata/facedatatrain", numTest,FACE_DATUM_WIDTH,FACE_DATUM_HEIGHT)
+    # validationLabels = samples.loadLabelsFile("facedata/facedatatrainlabels", numTest)
+
+    # rawTestData = samples.loadDataFile("facedata/facedatatest", numTest,FACE_DATUM_WIDTH,FACE_DATUM_HEIGHT)
+    # testLabels = samples.loadLabelsFile("facedata/facedatatestlabels", numTest)
   else:
-    rawTrainingData = samples.loadDataFile("digitdata/trainingimages", numTraining,DIGIT_DATUM_WIDTH,DIGIT_DATUM_HEIGHT)
-    trainingLabels = samples.loadLabelsFile("digitdata/traininglabels", numTraining)
-    rawValidationData = samples.loadDataFile("digitdata/validationimages", numTest,DIGIT_DATUM_WIDTH,DIGIT_DATUM_HEIGHT)
-    validationLabels = samples.loadLabelsFile("digitdata/validationlabels", numTest)
-    rawTestData = samples.loadDataFile("digitdata/testimages", numTest,DIGIT_DATUM_WIDTH,DIGIT_DATUM_HEIGHT)
-    testLabels = samples.loadLabelsFile("digitdata/testlabels", numTest)
+    rawTrainingData, trainingLabels = samples.loadDataAndLabel("digitdata/trainingimages", "digitdata/traininglabels",
+                                                               numTraining, DIGIT_DATUM_WIDTH, DIGIT_DATUM_HEIGHT)
+    rawValidationData, validationLabels = samples.loadDataAndLabel("digitdata/validationimages",
+                                                                   "digitdata/validationlabels",
+                                                                   numTest, DIGIT_DATUM_WIDTH, DIGIT_DATUM_HEIGHT)
+    rawTestData, testLabels = samples.loadDataAndLabel("digitdata/testimages", "digitdata/testlabels",
+                                                       numTest, DIGIT_DATUM_WIDTH, DIGIT_DATUM_HEIGHT)
+    # rawTrainingData = samples.loadDataFile("digitdata/trainingimages", numTraining,DIGIT_DATUM_WIDTH,DIGIT_DATUM_HEIGHT)
+    # trainingLabels = samples.loadLabelsFile("digitdata/traininglabels", numTraining)
+    # rawValidationData = samples.loadDataFile("digitdata/validationimages", numTest,DIGIT_DATUM_WIDTH,DIGIT_DATUM_HEIGHT)
+    # validationLabels = samples.loadLabelsFile("digitdata/validationlabels", numTest)
+    # rawTestData = samples.loadDataFile("digitdata/testimages", numTest,DIGIT_DATUM_WIDTH,DIGIT_DATUM_HEIGHT)
+    # testLabels = samples.loadLabelsFile("digitdata/testlabels", numTest)
     
   
   # Extract features
@@ -323,10 +342,10 @@ def runClassifier(args, options):
   # Conduct training and testing
   print ("Training...")
   classifier.train(trainingData, trainingLabels, validationData, validationLabels)
-  print ("Validating...")
+  # print ("Validating...")
   guesses = classifier.classify(validationData)
   correct = [guesses[i] == validationLabels[i] for i in range(len(validationLabels))].count(True)
-  print (str(correct), ("correct out of " + str(len(validationLabels)) + " (%.1f%%).") % (100.0 * correct / len(validationLabels)))
+  # print (str(correct), ("correct out of " + str(len(validationLabels)) + " (%.1f%%).") % (100.0 * correct / len(validationLabels)))
   print ("Testing...")
   guesses = classifier.classify(testData)
   correct = [guesses[i] == testLabels[i] for i in range(len(testLabels))].count(True)
@@ -355,8 +374,95 @@ def runClassifier(args, options):
       print ("=== Features with high weight for label %d ==="%l)
       printImage(features_weights)
 
+  return numTraining, correct
+
+def possibleCommands(classifiers, typeData, labelCountFaces, labelCountDigits ):
+  dic = {}
+  for classifier in classifiers:
+    for typeD in typeData:
+      dic[(classifier, typeD)] = []
+
+  percents = [ i for i in range(10,101,10)]
+  labelCountFacesPercent = [int(t*labelCountFaces/100) for t in percents]
+  labelCountDigitsPercent = [int(t * labelCountDigits / 100) for t in percents]
+
+  for classifier in classifiers:
+    for typeD in typeData:
+      if typeD == 'faces':
+        for i in labelCountFacesPercent:
+          dicClass = dic[(classifier, typeD)]
+          dicClass.append(['-c', classifier, '-d', typeD, '-t', str(i)])
+          dic[(classifier, typeD)] = dicClass
+      elif typeD == 'digits':
+        for i in labelCountDigitsPercent:
+          dicClass = dic[(classifier, typeD)]
+          dicClass.append(['-c', classifier, '-d', typeD, '-t', str(i)])
+          dic[(classifier, typeD)] = dicClass
+
+  return dic
+
+def findValue(key,x):
+  typeDir = ''
+  for i in x:
+    if i == key:
+      typeDir = x[x.index(i) + 1]
+  return typeDir
+
+def showGraph(x, y1, y2, title, xLabel, yLabel1,yLabel2):
+  fig, ax1 = plt.subplots()
+  ax2 = ax1.twinx()
+  ax1.plot(x, y1, 'g-')
+  ax2.plot(x, y2, 'b-')
+  ax1.set_xlabel(xLabel)
+  ax1.set_ylabel(yLabel1, color='g')
+  ax2.set_ylabel(yLabel2, color='b')
+  plt.title(title)
+  plt.show()
+
+def fullrun():
+
+  classifiers = ['naiveBayes','knn','perceptron']
+  typeData = ['faces','digits']
+  labelCountFaces = samples.getLabelCount("facedata/facedatatrainlabels")
+  labelCountDigits = samples.getLabelCount("digitdata/traininglabels")
+  dic = possibleCommands(classifiers, typeData, labelCountFaces, labelCountDigits )
+  for i in dic:
+    print(i, dic[i])
+  for key in dic:
+    values = dic[key]
+    percentages, times = [], []
+    for value in values:
+      startTime = time.time()
+      print("===================================")
+      print("===================================")
+      print("===================================")
+      args, options = readCommand(value)
+      numTraining, correct = runClassifier(args, options)
+      runTime = time.time() - startTime
+      percentages.append(correct)
+      times.append(runTime)
+      print("===================================")
+      print("===================================")
+      print("===================================")
+    c2,d2 = key
+    title = str(c2) + '  ' + str(d2)
+    showGraph(range(10, 101, 10), percentages, times, title, '% of training data', 'accuracy in %', 'time it took for training')
+    print(percentages)
+    print(times)
+
 if __name__ == '__main__':
   # Read input
-  args, options = readCommand( sys.argv[1:] ) 
-  # Run classifier
-  runClassifier(args, options)
+  x = sys.argv[1:]
+  typeD = 'full'
+  typeData = 'digits'
+  typeClass = 'perceptron'
+
+  for i in x:
+    if i == '-type':
+      typeD = x[x.index(i) + 1]
+      if typeD == 'full':
+        fullrun()
+        break
+      elif typeD == 'old':
+        args, options = readCommand(x)
+        runClassifier(args, options)
