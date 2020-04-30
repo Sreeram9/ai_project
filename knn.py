@@ -49,30 +49,31 @@ class KNNClassifier(classificationMethod.ClassificationMethod):
    
     "*** YOUR CODE HERE ***"
     # util.raiseNotDefined()
-        
+  def getFreq(self, datum1):
+    frequency = Counter()
+    distances = []
+    # print('datum1 is ',datum1)
+    for datum2, label in zip(self.trainingData, self.trainingLabels):
+      dist = self.getDistance(datum1, datum2)
+      distances.append((dist, label))
+    # print(' distances are ',distances)
+    sorted_distances = sorted(distances, key=itemgetter(0))[0:int(self.k)]
+    # print(' distances are ',sorted_distances)
+    for dis in sorted_distances:
+      frequency[dis[1]] = frequency[dis[1]] + 1
+    # print('Highest frequency label is ',frequency.most_common(1)[0][0])
+    return frequency.most_common(1)[0][0]
+
   def classify(self, testData):
     """
    
     """
-    guesses = []
-    
     print('value of k ',self.k)
-    for datum1 in testData:
-      frequency = Counter()
-      distances = []
-      # print('datum1 is ',datum1)
-      for datum2,label in zip(self.trainingData,self.trainingLabels):
-        
-        dist = self.getDistance(datum1,datum2)
-        distances.append((dist,label))
-      # print(' distances are ',distances)
-      sorted_distances = sorted(distances,key=itemgetter(0))[0:int(self.k)]    
-      # print(' distances are ',sorted_distances)
-      for dis in sorted_distances:
-        frequency[dis[1]] = frequency[dis[1]] + 1
-      # print('Highest frequency label is ',frequency.most_common(1)[0][0])
-      guesses.append(frequency.most_common(1)[0][0])
-    # print('Guess array is ',guesses)
+    import multiprocessing
+    num_cores = multiprocessing.cpu_count()
+    pool = multiprocessing.Pool(num_cores)
+
+    guesses = pool.map(self.getFreq,testData )
 
     # print('The first k are ',sorted_distances[0:int(self.k)])
     # print('frequency map is ',frequency)
@@ -80,7 +81,7 @@ class KNNClassifier(classificationMethod.ClassificationMethod):
     # print('value of k is ',self.k) 
     # print('The most common are ',sorted_distances.most_common(k))
     return guesses
-      
+
   def getDistance(self,point1,point2):
     difference = point1 - point2
     sum = 0

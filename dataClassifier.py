@@ -176,7 +176,7 @@ def readCommand( argv ):
   parser.add_option('-1', '--label1', help=default("First label in an odds ratio comparison"), default=0, type="int")
   parser.add_option('-2', '--label2', help=default("Second label in an odds ratio comparison"), default=1, type="int")
   parser.add_option('-w', '--weights', help=default('Whether to print weights'), default=False, action="store_true")
-  parser.add_option('-k', '--smoothing', help=default("Smoothing parameter (ignored when using --autotune)"), type="float", default=2.0)
+  parser.add_option('-k', '--smoothing', help=default("Smoothing parameter (ignored when using --autotune)"), type="float", default=5.0)
   parser.add_option('-a', '--autotune', help=default("Whether to automatically tune hyperparameters"), default=False, action="store_true")
   parser.add_option('-i', '--iterations', help=default("Maximum iterations to run training"), default=3, type="int")
   parser.add_option('-s', '--test', help=default("Amount of test data to use"), default=TEST_SET_SIZE, type="int")
@@ -426,8 +426,6 @@ def fullrun():
   labelCountFaces = samples.getLabelCount("facedata/facedatatrainlabels")
   labelCountDigits = samples.getLabelCount("digitdata/traininglabels")
   dic = possibleCommands(classifiers, typeData, labelCountFaces, labelCountDigits )
-  for i in dic:
-    print(i, dic[i])
   for key in dic:
     values = dic[key]
     percentages, times = [], []
