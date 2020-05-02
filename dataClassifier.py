@@ -16,7 +16,7 @@ import mira
 import samples
 import sys
 import util
-import time
+import time as tp
 import matplotlib.pyplot as plt
 import statistics
 
@@ -25,6 +25,9 @@ DIGIT_DATUM_WIDTH=28
 DIGIT_DATUM_HEIGHT=28
 FACE_DATUM_WIDTH=60
 FACE_DATUM_HEIGHT=70
+MAX_ITERATIONS = 10
+K_VALUE = 10
+TESTING_ITER = 5
 
 
 def basicFeatureExtractorDigit(datum):
@@ -176,9 +179,9 @@ def readCommand( argv ):
   parser.add_option('-1', '--label1', help=default("First label in an odds ratio comparison"), default=0, type="int")
   parser.add_option('-2', '--label2', help=default("Second label in an odds ratio comparison"), default=1, type="int")
   parser.add_option('-w', '--weights', help=default('Whether to print weights'), default=False, action="store_true")
-  parser.add_option('-k', '--smoothing', help=default("Smoothing parameter (ignored when using --autotune)"), type="float", default=10.0)
+  parser.add_option('-k', '--smoothing', help=default("Smoothing parameter (ignored when using --autotune)"), type="float", default=K_VALUE)
   parser.add_option('-a', '--autotune', help=default("Whether to automatically tune hyperparameters"), default=False, action="store_true")
-  parser.add_option('-i', '--iterations', help=default("Maximum iterations to run training"), default=10, type="int")
+  parser.add_option('-i', '--iterations', help=default("Maximum iterations to run training"), default=MAX_ITERATIONS, type="int")
   parser.add_option('-s', '--test', help=default("Amount of test data to use"), default=TEST_SET_SIZE, type="int")
   parser.add_option('-q', '--index', help=default("index of data whose predicted label and actual label you want to display"), default = -1, type="int")
   options, otherjunk = parser.parse_args(argv)
@@ -408,24 +411,26 @@ def findValue(key,x):
       typeDir = x[x.index(i) + 1]
   return typeDir
 
-def showGraph(x, y1, y2, title, xLabel, yLabel1,yLabel2):
+def showGraph(x, y1, y2, y3, title, xLabel, yLabel1,yLabel2, yLabel3):
   fig, ax1 = plt.subplots()
   ax2 = ax1.twinx()
+  ax3 = ax1.twinx()
   ax1.plot(x, y1, 'g-')
   ax2.plot(x, y2, 'b-')
+  ax3.plot(x, y3, 'r-')
   ax1.set_xlabel(xLabel)
   ax1.set_ylabel(yLabel1, color='g')
   ax2.set_ylabel(yLabel2, color='b')
+  ax3.set_ylabel(yLabel3, color='r')
   plt.title(title)
-  stdev = round(statistics.stdev(y1),2)
-  ax1.text(0.2, 0.95, 'standard deviation is ' + str(stdev),
-           ha='center', va='center',
-           transform=ax1.transAxes,
-           color='red', fontsize=10)
+  # stdev = round(statistics.stdev(y1),2)
+  # ax1.text(0.2, 0.95, 'standard deviation is ' + str(stdev),
+  #          ha='center', va='center',
+  #          transform=ax1.transAxes,
+  #          color='red', fontsize=10)
   plt.show()
 
-def fullrun():
-
+def fullRun():
   classifiers = ['naiveBayes','knn','perceptron']
   typeData = ['faces', 'digits']
   labelCountFaces = samples.getLabelCount("facedata/facedatatrainlabels")
@@ -436,17 +441,15 @@ def fullrun():
   for key in dic:
     c2, d2 = key
     values = dic[key]
-    percentages, times = [], []
+    percentages, times, stdevs = [], [], []
     for value in values:
-      startTime = time.time()
       print("===================================")
       print("===================================")
       print("===================================")
-      args, options = readCommand(value)
-      numTraining, correct = runClassifier(args, options)
-      runTime = time.time() - startTime
+      correct, runTime, stdev = runCommand(value)
       percentages.append(correct)
       times.append(runTime)
+      stdevs.append(stdev)
       print("===================================")
       print("===================================")
       print("===================================")
@@ -455,22 +458,40 @@ def fullrun():
     elif d2 == 'digits':
       percentages = [ 100 * yy / labelCountTestDigits for yy in percentages ]
     title = str(c2) + '  ' + str(d2)
-    showGraph(range(10, 101, 10), percentages, times, title, '% of training data', 'accuracy in %', 'time it took for training')
+    showGraph(range(10, 101, 10), percentages, times, stdevs, title,
+              '% of training data', 'accuracy in %', 'time it took for training', 'std dev for % training data')
     print(percentages)
     print(times)
+    print(stdevs)
+
+def runCommand(value):
+  percentages, times = [], []
+  count = TESTING_ITER
+  while(count > 0 ):
+    startTime = tp.time()
+    args, options = readCommand(value)
+    numTraining, correct = runClassifier(args, options)
+    runTime = tp.time() - startTime
+    percentages.append(correct)
+    times.append(runTime)
+    count = count - 1
+  if TESTING_ITER == 1:
+    stdev = 0
+  else:
+    stdev = round(statistics.stdev(percentages), 2)
+  percentage = sum(percentages) / len(percentages)
+  time = sum(times)/len(times)
+  return percentage, time, stdev
 
 if __name__ == '__main__':
   # Read input
   x = sys.argv[1:]
   typeD = 'full'
-  typeData = 'digits'
-  typeClass = 'perceptron'
-
   for i in x:
     if i == '-type':
       typeD = x[x.index(i) + 1]
       if typeD == 'full':
-        fullrun()
+        fullRun()
         break
       elif typeD == 'old':
         args, options = readCommand(x)
