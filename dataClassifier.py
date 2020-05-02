@@ -422,12 +422,8 @@ def showGraph(x, y1, y2, y3, title, xLabel, yLabel1,yLabel2, yLabel3):
   ax1.set_ylabel(yLabel1, color='g')
   ax2.set_ylabel(yLabel2, color='b')
   ax3.set_ylabel(yLabel3, color='r')
+  ax3.spines["right"].set_position(("axes", 1.13))
   plt.title(title)
-  # stdev = round(statistics.stdev(y1),2)
-  # ax1.text(0.2, 0.95, 'standard deviation is ' + str(stdev),
-  #          ha='center', va='center',
-  #          transform=ax1.transAxes,
-  #          color='red', fontsize=10)
   plt.show()
 
 def fullRun():
