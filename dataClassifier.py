@@ -481,11 +481,11 @@ def runCommand(value):
 
 if __name__ == '__main__':
   # Read input
-  x = sys.argv[1:]
+  cmdF = sys.argv[1:]
   typeD = 'full'
-  for i in x:
-    if i == '-type':
-      typeD = x[x.index(i) + 1]
+  for i in cmdF:
+    if i == '-x':
+      typeD = cmdF[cmdF.index(i) + 1]
       if typeD == 'full':
         fullRun()
         break
