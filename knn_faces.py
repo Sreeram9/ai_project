@@ -57,7 +57,7 @@ class KNNClassifierFaces(classificationMethod.ClassificationMethod):
 
   def getFreq(self, datum1):
 
-    distances = list(map(lambda x: ( self.cosine_distance(x[1],datum1), self.trainingLabels[x[0]]),
+    distances = list(map(lambda x: ( self.cosineDistance(x[1],datum1), self.trainingLabels[x[0]]),
              enumerate(self.trainingData)))
 
     sorted_distances = (sorted(distances, key=lambda x: x[0]))[:int(self.k)]
