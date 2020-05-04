@@ -473,11 +473,12 @@ if __name__ == '__main__':
   cmdF = sys.argv[1:]
   typeD = 'full'
   for i in cmdF:
-    if i == '-x':
+    if i == '-type':
       typeD = cmdF[cmdF.index(i) + 1]
       if typeD == 'full':
         fullRun()
         break
-      elif typeD == 'old':
-        args, options = readCommand(x)
-        runClassifier(args, options)
+    else:
+      args, options = readCommand(cmdF)
+      runClassifier(args, options)  
+      break
