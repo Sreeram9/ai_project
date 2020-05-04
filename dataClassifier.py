@@ -18,6 +18,8 @@ import util
 import time as tp
 import matplotlib.pyplot as plt
 import statistics
+import knn
+import knn_faces
 
 TEST_SET_SIZE = 15000
 DIGIT_DATUM_WIDTH=28
@@ -192,10 +194,6 @@ def readCommand( argv ):
   print ("--------------------")
   print ("data:\t\t", options.data)
   print ("classifier:\t\t", options.classifier)
-  if not options.classifier == 'minicontest':
-    print ("using enhanced features?:\t" + str(options.features))
-  else:
-    print ("using minicontest feature extractor")
   print ("training set size:\t" + str(options.training))
   if(options.data=="digits"):
     printImage = ImagePrinter(DIGIT_DATUM_WIDTH, DIGIT_DATUM_HEIGHT).printImage
@@ -204,8 +202,6 @@ def readCommand( argv ):
     else:
       print('using basicFeatureExtractorDigit for digits')
       featureFunction = basicFeatureExtractorDigit
-    if (options.classifier == 'minicontest'):
-      featureFunction = contestFeatureExtractorDigit
   elif(options.data=="faces"):
     printImage = ImagePrinter(FACE_DATUM_WIDTH, FACE_DATUM_HEIGHT).printImage
     if (options.features):
@@ -252,8 +248,10 @@ def readCommand( argv ):
   elif(options.classifier == "perceptron"):
     classifier = perceptron.PerceptronClassifier(legalLabels,options.iterations)
   elif(options.classifier == 'knn'):
-    import knn
-    classifier = knn.KNNClassifier(legalLabels,options.smoothing)
+    if (options.data == "digits"):
+      classifier = knn.KNNClassifier(legalLabels,options.smoothing)
+    else:
+      classifier = knn_faces.KNNClassifierFaces(legalLabels, options.smoothing)
   else:
     print ("Unknown classifier:", options.classifier)
     print (USAGE_STRING)
@@ -294,6 +292,7 @@ def runClassifier(args, options):
 
   if(options.data=="faces"):
 
+    # trr = tp.time()
     numTest = samples.getLabelCount("facedata/facedatatestlabels")
     rawTrainingData, trainingLabels = samples.loadDataAndLabel("facedata/facedatatrain", "facedata/facedatatrainlabels",
                                                            numTraining, FACE_DATUM_WIDTH, FACE_DATUM_HEIGHT)
@@ -302,6 +301,7 @@ def runClassifier(args, options):
                                                                    numTest, FACE_DATUM_WIDTH, FACE_DATUM_HEIGHT)
     rawTestData, testLabels = samples.loadDataAndLabel("facedata/facedatatest", "facedata/facedatatestlabels",
                                                    numTest, FACE_DATUM_WIDTH, FACE_DATUM_HEIGHT)
+    # print('time for loading ',numTraining,'  is ',tp.time() - trr)
     # rawTrainingData = samples.loadDataFile("facedata/facedatatrain", numTraining,FACE_DATUM_WIDTH,FACE_DATUM_HEIGHT)
     # trainingLabels = samples.loadLabelsFile("facedata/facedatatrainlabels", numTraining)
     # rawValidationData = samples.loadDataFile("facedata/facedatatrain", numTest,FACE_DATUM_WIDTH,FACE_DATUM_HEIGHT)
@@ -327,16 +327,16 @@ def runClassifier(args, options):
   
   # Extract features
   print ("Extracting features...")
-  trainingData = map(featureFunction, rawTrainingData)
-  validationData = map(featureFunction, rawValidationData)
-  testData = map(featureFunction, rawTestData)
+  trainingData1 = list(map(featureFunction, rawTrainingData))
+  # validationData = map(featureFunction, rawValidationData)
+  testData = list(map(featureFunction, rawTestData))
   
   # Conduct training and testing
   print ("Training...")
-  classifier.train(trainingData, trainingLabels, validationData, validationLabels)
+  classifier.train(trainingData1, trainingLabels, [], validationLabels)
   # print ("Validating...")
-  guesses = classifier.classify(validationData)
-  correct = [guesses[i] == validationLabels[i] for i in range(len(validationLabels))].count(True)
+  # guesses = classifier.classify(validationData)
+  # correct = [guesses[i] == validationLabels[i] for i in range(len(validationLabels))].count(True)
   # print (str(correct), ("correct out of " + str(len(validationLabels)) + " (%.1f%%).") % (100.0 * correct / len(validationLabels)))
   print ("Testing...")
   guesses = classifier.classify(testData)
